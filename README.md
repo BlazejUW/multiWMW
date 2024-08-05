@@ -15,13 +15,17 @@ Repozytorium zawiera kod źródłowy oraz pliki danych związane z pracą magist
 - `distance_no_avx512.cpp`: Kod w C++ obliczający odległości euklidesowe bez użycia AVX-512.
 - `distance_no_avx512_float.cpp`: Kod w C++ obliczający odległości euklidesowych bez użycia AVX-512 dla typów float.
 - `avx_support.cpp`: Kod w C++ sprawdzający wsparcie dla AVX-512.
-- Pliki danych eksperymentalnych w formacie `.csv`.
+- `reducing_z_ratio_without_redistribution.py`: Skrypt Python do eksperymentów nad zmniejszeniem liczności próbki referencyjnej \(Z\) bez redystrybucji.
+- `reducing_z_ratio_with_redistribution.py`: Skrypt Python do eksperymentów nad zmniejszeniem liczności próbki referencyjnej \(Z\) z redystrybucją do próbek \(X\) i \(Y\).
+- Pliki zawierające wyniki eksperymentów w formacie `.csv`.
 
 ## Wymagania
 
 - R (wersja >= 3.6.0)
 - Kompilator C++ obsługujący standard C++11 lub wyższy
 - Biblioteki C++: OpenMP (oraz ew. AVX-512)
+- Python (wersja >= 3.6)
+- Pakiety Python: numpy, scipy, pandas, scikit-learn, joblib, multiprocessing
 
 ## Instrukcja instalacji
 
@@ -38,11 +42,16 @@ Aby uruchomić kod, należy wykonać poniższe kroki:
     source("setup.R")
     ```
 
+3. Zainstalować wymagane pakiety Python:
+    ```bash
+    pip install numpy scipy pandas scikit-learn joblib
+    ```
+
 ## Opis funkcji
 
 ### rank_distance_original
 
-Oryginalna funkcja autorów pracy "A generalized Wilcoxon–Mann–Whitney type test for multivariate data through pairwise distance". U autorów pracy występuję pod nazwą `Rank_distance2`, w mojej pracy występuję pod zmienioną nazwą `rank_distance_original`. Znajduje się w pliku `rank_distance_original.R`. Oblicza statystykę na podstawie odległości euklidesowych pomiędzy punktami w przestrzeni wielowymiarowej.
+Oryginalna funkcja autorów pracy "A generalized Wilcoxon–Mann–Whitney type test for multivariate data through pairwise distance". U autorów pracy występuje pod nazwą `Rank_distance2`, w mojej pracy występuje pod zmienioną nazwą `rank_distance_original`. Znajduje się w pliku `rank_distance_original.R`. Oblicza statystykę na podstawie odległości euklidesowych pomiędzy punktami w przestrzeni wielowymiarowej.
 
 ### rank_distance_upgraded
 
@@ -59,6 +68,19 @@ Funkcja `rank_distance_upgraded_cpp` przyjmuje dodatkowe flagi jako argumenty:
 - `use_parallel`: Flaga wskazująca, czy używać przetwarzania równoległego (domyślnie TRUE).
 - `use_float`: Flaga wskazująca, czy używać typów float zamiast double (domyślnie FALSE).
 
+## Użycie funkcji w R
+Aby uruchomić każdą z funkcji, można użyć przykładowych danych:
+```r
+source("rank_distance_original.R") # Wczytanie funkcji rank_distance_original
+source("rank_distance_upgraded.R") # Wczytanie funkcji rank_distance_upgraded
+source("rank_distance_upgraded_cpp.R") # Wczytanie funkcji rank_distance_upgraded_cpp
+X <- matrix(rnorm(100), ncol=5)
+Y <- matrix(rnorm(100), ncol=5)
+Z <- matrix(rnorm(200), ncol=5)
+result_original <- rank_distance_original(X, Y, Z)
+result_upgraded <- rank_distance_upgraded(X, Y, Z)
+result_upgraded_cpp <- rank_distance_upgraded_cpp(X, Y, Z)
+```
 ## Pliki C++
 
 ### distance_avx512.cpp
@@ -81,6 +103,23 @@ Plik `distance_no_avx512_float.cpp` zawiera funkcje do obliczania macierzy odleg
 
 Plik `avx_support.cpp` zawiera funkcję sprawdzającą wsparcie dla instrukcji AVX-512 na danej maszynie.
 
+## Skrypty Python
+
+### reducing_z_ratio_without_redistribution.py
+
+Skrypt `reducing_z_ratio_without_redistribution.py` służy do eksperymentów nad zmniejszeniem liczności próbki referencyjnej \(Z\) bez redystrybucji. Skrypt generuje próbki \(X\), \(Y\) i \(Z\), a następnie zmniejsza liczność \(Z\) do różnych poziomów (75%, 60%, 50%, 37%, 25%, 10%, 5%, 1%) i analizuje wpływ tych zmian na p-wartości. Skrypt wykorzystuje metodę bootstrapu, która jest uruchamiana 500 razy, aby oszacować rozkład statystyki testowej i obliczyć p-wartości.
+
+### reducing_z_ratio_with_redistribution.py
+
+Skrypt `reducing_z_ratio_with_redistribution.py` służy do eksperymentów nad zmniejszeniem liczności próbki referencyjnej \(Z\) z redystrybucją do próbek \(X\) i \(Y\). Skrypt generuje próbki \(X\), \(Y\) i \(Z\), następnie zmniejsza liczność \(Z\) do różnych poziomów, redystrybuuje elementy \(Z\) do \(X\) i \(Y\) oraz analizuje wpływ tych zmian na p-wartości i czas działania algorytmu. Skrypt również wykorzystuje metodę bootstrapu, która jest uruchamiana 500 razy, aby oszacować rozkład statystyki testowej i obliczyć p-wartości.
+
+## Uruchamianie skryptów Python
+Aby uruchomić skrypty Python, należy uruchomić poniższe komendy:
+```bash
+python reducing_z_ratio_without_redistribution.py
+python reducing_z_ratio_with_redistribution.py
+```
+Dane do eksperymentów są generowane losowo i automatycznie. Zapisują się w odpowiednich plikach.
 ## Pliki z wynikami eksperymentów
 
 Pliki z wynikami eksperymentów znajdują się w repozytorium i kończą się rozszerzeniem `.csv`. Szczegółowy opis eksperymentów i wyników znajduje się w pracy magisterskiej.
